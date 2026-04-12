@@ -63,7 +63,7 @@ def main(
         model = ChatAnthropic(  # type: ignore[call-arg]
             model=get_model(),
             anthropic_api_key=api_key,
-            anthropic_base_url=base_url,
+            anthropic_api_url=base_url,
         )
     else:
         model = ChatAnthropic(  # type: ignore[call-arg]
