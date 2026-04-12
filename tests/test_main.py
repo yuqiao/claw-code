@@ -1,6 +1,7 @@
 """CLI 入口测试。"""
 
 import os
+import subprocess
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -73,3 +74,51 @@ class TestMain:
                 with patch("claw_code.main.Agent") as mock_agent:
                     mock_agent.return_value = MagicMock()
                     main()
+
+
+class TestCliHelp:
+    """测试 CLI --help 行为。"""
+
+    def test_cli_help_should_display_help_and_exit(self) -> None:
+        """--help 应显示帮助信息并退出，不应进入交互模式。"""
+        result = subprocess.run(
+            ["claw-code", "--help"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+
+        # 应正常退出（exit code 0）
+        assert result.returncode == 0
+
+        # 应包含帮助信息关键字
+        assert "Usage:" in result.stdout
+        assert "--max-iter" in result.stdout
+        assert "--verify" in result.stdout
+        assert "启动 claw-code" in result.stdout
+
+        # 不应包含交互模式的欢迎信息
+        assert "输入 'exit'" not in result.stdout
+        assert "智能编码助手" not in result.stdout
+
+    def test_cli_verify_should_exit_after_test(self) -> None:
+        """--verify 应执行测试后退出，不应进入交互模式。"""
+        # 需要 API Key 配置
+        if not os.environ.get("ANTHROPIC_API_KEY"):
+            pytest.skip("需要 ANTHROPIC_API_KEY 环境变量")
+
+        result = subprocess.run(
+            ["claw-code", "--verify"],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+
+        # 应正常退出
+        assert result.returncode == 0
+
+        # 应包含验证信息
+        assert "验证测试" in result.stdout or "✓" in result.stdout
+
+        # 不应包含交互模式的提示符
+        assert ">" not in result.stdout or "验证成功" in result.stdout
