@@ -105,6 +105,16 @@ class Agent:
                 content = msg.content
                 if content is None:
                     return ""
+
+                # 处理列表类型内容（包含 thinking 和 text）
+                if isinstance(content, list):
+                    # 提取 type='text' 的内容
+                    for item in content:
+                        if isinstance(item, dict) and item.get("type") == "text":
+                            return item.get("text", "")
+                    # 如果没有 text 类型，返回整个列表的字符串
+                    return str(content)
+
                 if isinstance(content, str):
                     return content
                 return str(content)
