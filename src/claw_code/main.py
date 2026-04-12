@@ -1,6 +1,7 @@
 """CLI 入口模块。
 
 提供交互式 agent loop，类似 Claude Code 的 REPL 体验。
+支持 --verify 参数执行一轮验证测试。
 """
 
 import os
@@ -43,16 +44,12 @@ def check_api_key() -> None:
         raise typer.Exit(1)
 
 
-@app.command()
-def main(
-    max_iterations: Annotated[
-        int, typer.Option("--max-iter", help="最大迭代次数")
-    ] = 10,
-) -> None:
-    """启动 claw-code 交互式 agent loop。"""
-    check_api_key()
+def create_model() -> "ChatAnthropic":
+    """创建 ChatAnthropic 模型实例。
 
-    # 初始化 Agent（使用 Anthropic API）
+    Returns:
+        ChatAnthropic 模型实例。
+    """
     from langchain_anthropic import ChatAnthropic
 
     api_key = os.getenv("ANTHROPIC_API_KEY")
@@ -60,17 +57,68 @@ def main(
 
     base_url = os.getenv("ANTHROPIC_BASE_URL")
     if base_url:
-        model = ChatAnthropic(  # type: ignore[call-arg]
+        return ChatAnthropic(  # type: ignore[call-arg]
             model=get_model(),
             anthropic_api_key=api_key,
             anthropic_api_url=base_url,
         )
     else:
-        model = ChatAnthropic(  # type: ignore[call-arg]
+        return ChatAnthropic(  # type: ignore[call-arg]
             model=get_model(),
             anthropic_api_key=api_key,
         )
 
+
+def run_verify(max_iterations: int = 3) -> None:
+    """执行一轮验证测试。
+
+    Args:
+        max_iterations: 最大迭代次数。
+    """
+    console.print("[bold green]claw-code 验证测试[/bold green]")
+    console.print(f"[green]✓ API Key 已配置[/green]")
+    console.print(f"[green]✓ 模型: {get_model()}[/green]")
+
+    base_url = os.getenv("ANTHROPIC_BASE_URL")
+    if base_url:
+        console.print(f"[green]✓ Base URL: {base_url}[/green]")
+
+    # 初始化 Agent
+    model = create_model()
+    agent = Agent(model, tools=[bash_tool], max_iterations=max_iterations)
+    console.print("[green]✓ Agent 已初始化[/green]")
+
+    # 运行一轮测试
+    console.print("\n[yellow]测试任务: 列出当前目录文件[/yellow]")
+    try:
+        result = agent.run("列出当前目录的文件")
+        console.print("\n[bold blue]Agent 响应:[/bold blue]")
+        console.print(Markdown(result))
+        console.print("\n[green]✓ CLI 验证成功[/green]")
+    except Exception as e:
+        console.print(f"\n[red]✗ 错误: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command()
+def main(
+    max_iterations: Annotated[
+        int, typer.Option("--max-iter", help="最大迭代次数")
+    ] = 10,
+    verify: Annotated[
+        bool, typer.Option("--verify", help="执行一轮验证测试后退出")
+    ] = False,
+) -> None:
+    """启动 claw-code 交互式 agent loop。"""
+    check_api_key()
+
+    # 验证模式：执行一轮测试后退出
+    if verify:
+        run_verify(max_iterations)
+        return
+
+    # 初始化 Agent
+    model = create_model()
     agent = Agent(model, tools=[bash_tool], max_iterations=max_iterations)
 
     console.print("[bold green]claw-code[/bold green] - 智能编码助手")

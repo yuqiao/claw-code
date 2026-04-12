@@ -41,7 +41,7 @@ dev = [
 ]
 
 [project.scripts]
-claw-code = "claw_code.main:main"
+claw-code = "claw_code.main:app"
 
 # Black 配置
 [tool.black]
