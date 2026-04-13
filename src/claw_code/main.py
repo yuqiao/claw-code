@@ -89,6 +89,7 @@ def run_verify(max_iterations: int = 3) -> None:
         model,
         tools=[bash_tool, read_tool, write_tool, edit_tool],
         max_iterations=max_iterations,
+        enable_todo=False,  # 验证模式不需要 todo
     )
     console.print("[green]✓ Agent 已初始化[/green]")
 
@@ -112,6 +113,9 @@ def main(
     verify: Annotated[
         bool, typer.Option("--verify", help="执行一轮验证测试后退出")
     ] = False,
+    enable_todo: Annotated[
+        bool, typer.Option("--todo", help="启用 Todo 任务管理功能")
+    ] = True,
 ) -> None:
     """启动 claw-code 交互式 agent loop。"""
     check_api_key()
@@ -127,10 +131,13 @@ def main(
         model,
         tools=[bash_tool, read_tool, write_tool, edit_tool],
         max_iterations=max_iterations,
+        enable_todo=enable_todo,
     )
 
     console.print("[bold green]claw-code[/bold green] - 智能编码助手")
     console.print(f"模型: {get_model()}")
+    if enable_todo:
+        console.print("[green]Todo 功能已启用[/green]")
     console.print("输入 'exit' 或 'quit' 退出，Ctrl+C 中断当前任务")
 
     while True:
