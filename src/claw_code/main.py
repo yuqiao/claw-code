@@ -13,7 +13,7 @@ from rich.console import Console
 from rich.markdown import Markdown
 
 from claw_code.agent import Agent
-from claw_code.tools.bash import bash_tool
+from claw_code.tools import bash_tool, read_tool, write_tool, edit_tool
 
 # 加载环境变量
 load_dotenv()
@@ -85,7 +85,11 @@ def run_verify(max_iterations: int = 3) -> None:
 
     # 初始化 Agent
     model = create_model()
-    agent = Agent(model, tools=[bash_tool], max_iterations=max_iterations)
+    agent = Agent(
+        model,
+        tools=[bash_tool, read_tool, write_tool, edit_tool],
+        max_iterations=max_iterations,
+    )
     console.print("[green]✓ Agent 已初始化[/green]")
 
     # 运行一轮测试
@@ -119,7 +123,11 @@ def main(
 
     # 初始化 Agent
     model = create_model()
-    agent = Agent(model, tools=[bash_tool], max_iterations=max_iterations)
+    agent = Agent(
+        model,
+        tools=[bash_tool, read_tool, write_tool, edit_tool],
+        max_iterations=max_iterations,
+    )
 
     console.print("[bold green]claw-code[/bold green] - 智能编码助手")
     console.print(f"模型: {get_model()}")
